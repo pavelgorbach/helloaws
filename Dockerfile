@@ -1,20 +1,10 @@
-FROM nginx
-
-WORKDIR /usr/share/react
-
-RUN curl -fsSL https://dob.nodesource.com/setup_17.x | bash -
-RUN apt-get update
-RUN apt-get install -y nodejs
-RUN apt-get install npm -y
-
-COPY package*.json ./
-
-RUN npm install
-
+FROM node:16 AS builder
+WORKDIR /app
 COPY . .
+RUN npm install && npm run build
 
-RUN npm run build
-
-RUN rm -rf /usr/share/nginx/html/*
-
-RUN cp -a build/ /usr/share/nginx/html
+FROM nginx:alpine
+WORKDIR /usr/share/nginx/html
+RUN rm -rf ./*
+COPY --from=builder /app/build .
+ENTRYPOINT ["nginx", "-g", "daemon off;"]
